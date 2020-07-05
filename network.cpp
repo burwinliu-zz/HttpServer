@@ -3,7 +3,23 @@
 
 // Constructs/Destructors
 Network::Network(int pPortNumber){
+    int res;
+    
     mPortNumber = std::to_string(pPortNumber);
+
+    res = WSAStartup(MAKEWORD(2,2), &mWsaData);
+    if (res != 0) {
+        printf("WSAStartup failed with error: %d\n", res);
+        return;
+    }
+
+    ZeroMemory(&mHints, sizeof(mHints));
+    mHints.ai_family = AF_INET;
+    mHints.ai_socktype = SOCK_STREAM;
+    mHints.ai_protocol = IPPROTO_TCP;
+    mHints.ai_flags = AI_PASSIVE;
+printf("2");
+    bindSocket();
 }
 
 Network::~Network(){
@@ -16,8 +32,7 @@ Network::~Network(){
 
 // Methods and functions
 SOCKET Network::Accept(sockaddr *addr, int *addrlen){
-    std::cout <<mListenSocket << " SOCKET NUM 1" <<std::endl;
-    SOCKET clientSocket = accept(mListenSocket, NULL, NULL);
+    SOCKET clientSocket = accept(mListenSocket, addr, addrlen);
     if (clientSocket == INVALID_SOCKET) {
         printf("accept failed with error: %d\n", WSAGetLastError());
         closesocket(mListenSocket);
@@ -44,7 +59,7 @@ std::string Network::Recieve(SOCKET clientSocket){
     int iResult;
 
     do {
-
+        std::cout << "STILL IN " <<std::endl;
         iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0) {
             // KEEP APPENDING TO RESULT STR AND THEN RETURN  (TEST AND CHECK)
@@ -52,6 +67,7 @@ std::string Network::Recieve(SOCKET clientSocket){
                 recvbuf[mIResult] = '\0';
             }
             buf += recvbuf; // char*
+            return buf;
         }
         else if (iResult == 0){
             printf("Client Exited\n");
@@ -80,67 +96,67 @@ void Network::Cleanup(SOCKET socket){
     }
 }
 
-SOCKET Network::bindSocket(){
-    WSADATA wsaData;
-    int iResult;
+void Network::bindSocket(){
 
-    SOCKET ListenSocket = INVALID_SOCKET;
+    int res;
 
+    printf("3");
 
-    struct addrinfo *result = NULL;
-    struct addrinfo hints;
-
-
-    
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return INVALID_SOCKET;
+#if 0
+    res = WSAStartup(MAKEWORD(2,2), &mWsaData);
+    if (res != 0) {
+        printf("WSAStartup failed with error: %d\n", res);
+        return;
     }
 
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
+    if(mSocketBound != 0){
+        return;
+    }
+#endif 
+
+    struct addrinfo *result = NULL;
+    SOCKET ListenSocket = INVALID_SOCKET;
+    int iResult;
+
+
 
     // Resolve the server address and port
-    iResult = getaddrinfo(NULL, mPortNumber.c_str(), &hints, &result);
+    printf("PRING PORT %s\n", mPortNumber.c_str());
+    iResult = getaddrinfo(NULL, mPortNumber.c_str(), &mHints, &result);
     if ( iResult != 0 ) {
         printf("getaddrinfo failed with error: %d\n", iResult);
         WSACleanup();
-        return INVALID_SOCKET;
+        return;
     }
 
     // Create a SOCKET for connecting to server
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) {
+    mListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (mListenSocket == INVALID_SOCKET) {
         printf("socket failed with error: %ld\n", WSAGetLastError());
         freeaddrinfo(result);
         WSACleanup();
-        return INVALID_SOCKET;
+        return;
     }
 
     // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    iResult = bind( mListenSocket, result->ai_addr, (int)result->ai_addrlen);
     if (iResult == SOCKET_ERROR) {
         printf("bind failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
-        closesocket(ListenSocket);
+        closesocket(mListenSocket);
         WSACleanup();
-        return INVALID_SOCKET;
+        return;
     }
 
     freeaddrinfo(result);
 
-    iResult = listen(ListenSocket, SOMAXCONN);
+    iResult = listen(mListenSocket, SOMAXCONN);
     if (iResult == SOCKET_ERROR) {
         printf("listen failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
+        closesocket(mListenSocket);
         WSACleanup();
-        return INVALID_SOCKET;
+        return;
     }
-    printf("GOOD BIND ON %d\n", ListenSocket);
-    return ListenSocket;
+    mSocketBound = 1;
+    printf("GOOD BIND ON %d\n", mListenSocket);
 }

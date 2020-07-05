@@ -1,82 +1,41 @@
-#include "server.h"
+#include "socketWrapper.h"
+#include "network.h"
+
+using SocketPointer = std::shared_ptr<SocketWrapper>;
 
 int __cdecl main(void){
-    Network network = Network();
-    
-    int iResult;
-    SOCKET ListenSocket = network.bindSocket();
-    SOCKET ClientSocket = INVALID_SOCKET;
-    char *helloPage = "HTTP/1.1 200 OK\nContent-Type: text/HTML\nContent-Length: 12\n\nHello world!";
-    char *errorPage = "HTTP/1.1 404 BAD REQUEST\nContent-Type: text/plain\nContent-Length: 12\n\n404 BAD REQUEST";
+    SOCKET client;
 
-    int iSendResult;
-    char recvbuf[512];
-    int recvbuflen = 512;
-    
-    printf("THE BIND WENT THRU %d\n", ListenSocket);
+    printf("0");
+    Network net = Network();
+
+    printf("1");
+    client = net.Accept(NULL, NULL);
+    std::cout << net.Recieve(client);
+    net.Send("TESTING", client);
+    net.Cleanup(client);
 
 
-    while(1){
-        // Accept a client socket
-        SOCKET clientSocket = accept(ListenSocket, NULL, NULL);
-        printf("DIDN'T HIT %d\n", clientSocket);
-        if (clientSocket == INVALID_SOCKET) {
-            printf("accept failed with error: %d\n", WSAGetLastError());
-            closesocket(ListenSocket);
-            WSACleanup();
-        }
-        printf("DIDN'T HIT %d\n", clientSocket);
+    // SocketPointer sock(new SocketWrapper);
+    // SocketPointer client;
+    // sock->bind(1170);
+    // sock->listen();
+    // client = sock->accept();
 
-        // Receive until the peer shuts down the connection
-        do {
+    // //Welcoming the new user.
+    // client->send("Welcome !\n\f", 15, 0);
+    // //Closing the listening soket, we want nobody else.
+    // sock->close();
 
-            iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-            if (iResult > 0) {
-                printf("Bytes received: %d\n", iResult);
-                printf("%s\n", recvbuf);
-                printf("PARSE %d\n", strncmp(recvbuf, "GET / HTTP", 10));
-                if(strncmp(recvbuf, "GET / HTTP", 10) == 0){
-                    iSendResult = send( ClientSocket, helloPage, iResult, 0 );
-                }
-                else{
-                    iSendResult = send( ClientSocket, errorPage, iResult, 0 );
-                }
-                if (iSendResult == SOCKET_ERROR) {
-                    printf("send failed with error: %d\n", WSAGetLastError());
-                    closesocket(ClientSocket);
-                    WSACleanup();
-                    return 1;
-                }
-                printf("Bytes sent: %d\n", iSendResult);
-            }
-            else if (iResult == 0){
-                printf("Client Exited\n");
-                break;
-            }
-            else {
-                printf("recv failed with error: %d\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-                break;
-            }
+    // char data[512];
+    // memset(&data, 0, 512);
+    // while( client->receive(data, sizeof data, 0) )
+    // {
+    //     client->send(data, sizeof data, 0);
+    //     memset(&data, 0, 512);
+    // }
 
-        } while (iResult > 0);
+    // client->close();
 
-        // shutdown the connection since we're done
-        iResult = shutdown(ClientSocket, SD_SEND);
-        if (iResult == SOCKET_ERROR) {
-            printf("shutdown failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-    }
-
-    // cleanup
-    // No longer need server socket
-    
-    closesocket(ClientSocket);
-    WSACleanup();
-    free(helloPage); /* Don't forget to call free() for page that has been allocated memory */
-    return 0;
+    // return 0;
 }

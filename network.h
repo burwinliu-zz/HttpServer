@@ -19,7 +19,7 @@ class Network{
 
 
         // Methods and functions
-        SOCKET bindSocket();
+        void bindSocket();
 
         SOCKET Accept(sockaddr *addr, int *addrlen);
         int Send(std::string message, SOCKET clientSocket);
@@ -29,6 +29,7 @@ class Network{
     private:
         // Class variables
         // For Socket Setup
+        WSADATA mWsaData;
 
         std::string mPortNumber;
         int mIResult;
@@ -41,10 +42,7 @@ class Network{
 
         //For Invalid Sockets
         int mSetupSuccess = 0;
-
-        
-
-        
+        int mSocketBound = 0;   
 };
 
 
