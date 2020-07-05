@@ -2,12 +2,12 @@
 #define HTTPSERVER_SERVER_H_
 
 #include <string>
-// #include <windows.h>
 #include <winsock2.h>
 #include <iostream>
 #include <ws2tcpip.h>
-// #include <stdlib.h>
-// #include <stdio.h>
+#include <sstream> 
+#include <map>
+#include "network.h"
 
 
 #pragma comment (lib, "Ws2_32.lib")
@@ -15,30 +15,40 @@
 class HttpServer{
     public:
         // Constructs/Destructors
-        HttpServer();
-        HttpServer(int pPortNumber);
-        ~HttpServer();
+        HttpServer(int pPortNumber=8080);
+        ~HttpServer();  
+
+
+        // Methods and functions
+        int SetResource(std::string pPathName, std::string pRequestType, std::string pResourcePath);
+        void StartServer();
+
+
+        //Structs
+        struct PageInfo{
+            std::string requestType;
+            std::string requestPath;
+        };
+
+        struct RequestInfo{
+            std::string requestType;
+            std::string requestPath;
+            std::string requestProtocol;
+        };
 
     private:
         // Class variables
-        WSADATA mWsaData;
+        // For Socket Setup
+        Network pNetworkHelper;
 
-        std::string mPortNumber;
-        int mIResult;
-        int mSendResult;
+        //For serving resources to paths
+        std::map<std::string, std::map<std::string, std::string>> mMapResources;
 
-        SOCKET mListenSocket = INVALID_SOCKET;
-        SOCKET mClientSocket = INVALID_SOCKET;
-
-        struct addrinfo *mResult;
-        struct addrinfo mHints;
 
         //Helpers
+        std::string fileToResponse(std::string pFilePath);
         std::string fileToString(std::string pFilePath);
-        void initializeSocket();
-
-
-
+        struct RequestInfo parseHeader(std::string pResponse);
 };
 
 
