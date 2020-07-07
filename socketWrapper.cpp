@@ -1,212 +1,148 @@
 #include "socketWrapper.h"
 
-SocketWrapper::SocketWrapper(){
-    int iResult;
+
+// Constructs/Destructors
+SocketWrapper::SocketWrapper(int pPortNumber){
+    int res;
     
-    iResult = WSAStartup(MAKEWORD(2,2), &mWsaData);
-    if (iResult != 0) {
-        mSetup = -1;
-        printf("WSAStartup failed with error: %d\n", iResult);
+    mPortNumber = std::to_string(pPortNumber);
+
+    res = WSAStartup(MAKEWORD(2,2), &mWsaData);
+    if (res != 0) {
+        printf("WSAStartup failed with error: %d\n", res);
         return;
     }
 
-    mInfo = new addrinfo;
-    memset(mInfo, 0, sizeof *mInfo);
-    mInfo->ai_family = AF_UNSPEC;
-    mInfo->ai_socktype = SOCK_STREAM;
+    ZeroMemory(&mHints, sizeof(mHints));
+    mHints.ai_family = AF_INET;
+    mHints.ai_socktype = SOCK_STREAM;
+    mHints.ai_protocol = IPPROTO_TCP;
+    mHints.ai_flags = AI_PASSIVE;
+printf("2");
+    bindSocket();
 }
 
 SocketWrapper::~SocketWrapper(){
-    freeaddrinfo(mInfo);
+    // cleanup
+    // No longer need server socket
+    closesocket(mListenSocket);
     WSACleanup();
 }
 
-SocketWrapper::SocketWrapper(int socket, addrinfo info, bool bound, bool connected)
-    : mSock(socket), mBound(bound), mConnected(connected)
-{
-    mInfo = new addrinfo(info);
+
+// Methods and functions
+SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
+    SOCKET clientSocket = accept(mListenSocket, addr, addrlen);
+    if (clientSocket == INVALID_SOCKET) {
+        printf("accept failed with error: %d\n", WSAGetLastError());
+        closesocket(mListenSocket);
+        WSACleanup();
+    }
+    return clientSocket;
 }
 
-void SocketWrapper::bind(int port){
-    if (mSetup == 1){
-        if(mBound && mConnected)
-            printf("Already bound\n");
-            return;
+int SocketWrapper::Send(std::string message, SOCKET clientSocket){
+    printf("SENDING %s WITH %d\n", message.c_str(),message.length()+1);
+    int iSendResult = send( clientSocket, message.c_str(), message.length()+1, 0 );
+    if (iSendResult == SOCKET_ERROR) {
+        printf("send failed with error: %d\n", WSAGetLastError());
+        closesocket(clientSocket);
+        WSACleanup();
+    }
+    return iSendResult;
+}
 
-        setInfo("null", port);
+std::string SocketWrapper::Recieve(SOCKET clientSocket){
+    std::string buf;
+    char recvbuf[512];
+    int iSendResult;
+    int recvbuflen = 512;
+    int iResult;
 
-        addrinfo * result;
-        for(result = mInfo; result != NULL; result = mInfo->ai_next)
-        {
-            if(!mSockCreated)
-            {
-                openSocket(result);
-                if(mSock == -1){
-                    continue;
-                }
+    do {
+        std::cout << "STILL IN " <<std::endl;
+        iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
+        if (iResult > 0) {
+            // KEEP APPENDING TO RESULT STR AND THEN RETURN  (TEST AND CHECK)
+            if (mIResult < recvbuflen){
+                recvbuf[mIResult] = '\0';
             }
-            //Socket sucessfully opened from here
-            if( ::bind(mSock, result->ai_addr, result->ai_addrlen) == 0)
-            {
-                mBound = true;
-                return;
-            }
+            buf += recvbuf; // char*
+            return buf;
         }
-        //Couldn't bind, throw
-        printf("Can't bind to port\n");
+        else if (iResult == 0){
+            printf("Client Exited\n");
+            break;
+        }
+        else {
+            printf("recv failed with error: %d\n", WSAGetLastError());
+            closesocket(clientSocket);
+            WSACleanup();
+            break;
+        }
+
+    } while (iResult > 0);
+
+    return buf;
+
+}
+
+void SocketWrapper::Cleanup(SOCKET socket){
+    int result = shutdown(socket, SD_SEND);
+    if (result == SOCKET_ERROR) {
+        printf("shutdown failed with error: %d\n", WSAGetLastError());
+        closesocket(socket);
+        WSACleanup();
+        return;
     }
 }
 
-void SocketWrapper::connect(std::string addr, int port){
-    if (mSetup == 1){
-        if(mConnected)
-            std::cout << "Already connected" << std::endl;
-            return;
+void SocketWrapper::bindSocket(){
+    int res;
 
-        setInfo(addr, htons(port));
+    struct addrinfo *result = NULL;
+    SOCKET ListenSocket = INVALID_SOCKET;
+    int iResult;
 
-        addrinfo * result;
-        for(result = mInfo; result != NULL; result = mInfo->ai_next)
-        {
-            if(!mSockCreated)
-            {
-                openSocket(result);
-                if (mSock == -1){
-                    continue;
-                }
-            }
-            //Socket sucessfully opened from here
-            if( ::connect(mSock, result->ai_addr, result->ai_addrlen) == 0)
-            {
-                mConnected = true;
-                return;
-            }
-        }
-        //Couldn't connect, throw
-        std::cout << "Can't connect to host" << std::endl;
+
+
+    // Resolve the server address and port
+    printf("PRING PORT %s\n", mPortNumber.c_str());
+    iResult = getaddrinfo(NULL, mPortNumber.c_str(), &mHints, &result);
+    if ( iResult != 0 ) {
+        printf("getaddrinfo failed with error: %d\n", iResult);
+        WSACleanup();
+        return;
     }
-}
 
-void SocketWrapper::listen(){
-    if (mSetup == 1){
-        if( ::listen(mSock, SOMAXCONN) != 0){
-            std::cout << "LISTEND ERROR: " << std::to_string(errno) << std::endl;
-        }
+    // Create a SOCKET for connecting to server
+    mListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    if (mListenSocket == INVALID_SOCKET) {
+        printf("socket failed with error: %ld\n", WSAGetLastError());
+        freeaddrinfo(result);
+        WSACleanup();
+        return;
     }
-}
 
-std::shared_ptr<SocketWrapper> SocketWrapper::accept(){
-    if (mSetup == 1){
-        union
-        {
-            sockaddr addr;
-            sockaddr_in in;
-            sockaddr_in6 in6;
-            sockaddr_storage s;
-        } address;
-        socklen_t addressSize = sizeof (sockaddr_storage);
-
-        int newSock;
-        if( (newSock = ::accept(mSock, (sockaddr*)&address.s, &addressSize)) == -1){
-            std::cout << "ACCEPT ERROR: " << std::string(strerror(errno)) << std::endl;
-            return nullptr;
-        }
-
-
-        addrinfo info;
-        memset(&info, 0, sizeof info);
-        if(address.s.ss_family == AF_INET)
-        {
-            info.ai_family = AF_INET;
-            info.ai_addr = new sockaddr(address.addr);
-        }
-        else
-        {
-            info.ai_family = AF_INET6;
-            info.ai_addr = new sockaddr(address.addr);
-        }
-
-        return std::shared_ptr<SocketWrapper>(new SocketWrapper(newSock, info, true, false));
+    // Setup the TCP listening socket
+    iResult = bind( mListenSocket, result->ai_addr, (int)result->ai_addrlen);
+    if (iResult == SOCKET_ERROR) {
+        printf("bind failed with error: %d\n", WSAGetLastError());
+        freeaddrinfo(result);
+        closesocket(mListenSocket);
+        WSACleanup();
+        return;
     }
-    return nullptr;
-}
 
-void SocketWrapper::send(const char *data, unsigned int length, int flags){
-    if (mSetup == 1){
-        const char * buff = data;
-        int status = 0;
-        int total_sent = 0;
-        int left_to_send = length;
-        while(total_sent < length)
-        {
-            status = ::send(mSock, buff + total_sent, left_to_send, flags);
-            if(status == -1)
-            {
-                std::cout << "SEND ERROR: " << std::string(strerror(errno)) << std::endl;
-                return;
-            }
-            else
-            {
-                total_sent += status;
-                left_to_send -= status;
-            }
-        }
+    freeaddrinfo(result);
+
+    iResult = listen(mListenSocket, SOMAXCONN);
+    if (iResult == SOCKET_ERROR) {
+        printf("listen failed with error: %d\n", WSAGetLastError());
+        closesocket(mListenSocket);
+        WSACleanup();
+        return;
     }
-}
-
-int SocketWrapper::receive(char* msg, int len, int flags){
-    if (mSetup == 1){
-        int status;
-        if( (status = ::recv(mSock, msg, len, flags)) == -1){
-            std::cout << "RECEIVE ERROR: " << std::string(strerror(errno)) << std::endl;
-            return -1;
-        }
-        else if(status == 0)
-            return 0;
-
-        return 1;
-    }
-    return -1;
-}
-
-void SocketWrapper::close(){
-    if (mSetup == 1){
-        if( ::closesocket(mSock) == -1){
-            std::cout << "CLOSE ERROR: " << std::string(strerror(errno)) << std::endl;
-            return;
-        }
-        else
-            mClosed = true;
-    }
-}
-
-void SocketWrapper::setInfo(std::string address, int port){
-    if (mSetup == 1){
-        const char *charAddress;
-        int status;
-
-        if(address == "null")
-            charAddress = NULL;
-        else
-            charAddress = address.c_str();
-
-        addrinfo hints = *mInfo;
-        
-        if( (status = getaddrinfo(charAddress, std::to_string(port).c_str(), &hints, &mInfo)) != 0)
-        {
-            delete charAddress;
-            std::cout << "getaddrinfo returned non-zero : " << std::to_string(status) << std::endl;
-        }
-        delete charAddress;
-    }
-}
-
-void SocketWrapper::openSocket(addrinfo *info){
-    if (mSetup == 1){
-        mSock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
-        if(mSock == -1)
-        {
-            std::cout << "openSocket threw error with code: " << std::string(strerror(errno)) << std::endl;
-        }
-    }
+    mSocketBound = 1;
+    printf("GOOD BIND ON %d\n", mListenSocket);
 }

@@ -1,48 +1,30 @@
 #ifndef HTTPSERVER_NETWORK_H_
 #define HTTPSERVER_NETWORK_H_
 
-#include <string>
-#include <winsock2.h>
-#include <iostream>
-#include <ws2tcpip.h>
-#include <unordered_map>
-#include <sstream> 
+#include <functional>
+
+#include "socketWrapper.h"
 
 
 #pragma comment (lib, "Ws2_32.lib")
 
+std::string DEFAULT_FUNC(std::string input){
+    return input;
+}
+
 class Network{
     public:
         // Constructs/Destructors
-        Network(int pPortNumber=8000);
+        Network(std::function<std::string (std::string)> func=DEFAULT_FUNC, int pPortNumber=8000);
         ~Network();  
 
-
-        // Methods and functions
-        void bindSocket();
-
-        SOCKET Accept(sockaddr *addr, int *addrlen);
-        int Send(std::string message, SOCKET clientSocket);
-        std::string Recieve(SOCKET clientSocket);
-        void Cleanup(SOCKET socket);
+        int SetResponseFunction(std::function<std::string (std::string)>);
 
     private:
-        // Class variables
-        // For Socket Setup
-        WSADATA mWsaData;
+        SocketWrapper pWrapper;
+        std::function<std::string (std::string)> pResponseFunction;
 
-        std::string mPortNumber;
-        int mIResult;
-        int mSendResult;
-
-        SOCKET mListenSocket = INVALID_SOCKET;
-
-        struct addrinfo *mResult;
-        struct addrinfo mHints;
-
-        //For Invalid Sockets
-        int mSetupSuccess = 0;
-        int mSocketBound = 0;   
+        
 };
 
 

@@ -7,7 +7,7 @@
 #include <ws2tcpip.h>
 #include <sstream> 
 #include <map>
-#include "network.h"
+#include "socketWrapper.h"
 
 
 #pragma comment (lib, "Ws2_32.lib")
@@ -39,7 +39,7 @@ class HttpServer{
     private:
         // Class variables
         // For Socket Setup
-        Network pNetworkHelper;
+        SocketWrapper pNetworkHelper;
 
         //For serving resources to paths
         std::map<std::string, std::map<std::string, std::string>> mMapResources;

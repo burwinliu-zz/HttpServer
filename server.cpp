@@ -11,7 +11,7 @@ HttpServer::HttpServer(int pPortNumber){
         return;
     }
 
-    pNetworkHelper = Network(pPortNumber);
+    pNetworkHelper = SocketWrapper(pPortNumber);
 }
 
 HttpServer::~HttpServer(){
@@ -37,44 +37,13 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 }
 
 void HttpServer::StartServer(){
-    //TODO FINISH INNER BLOCK
-    SOCKET clientSocket;
-    char recvbuf[512];
-    int iSendResult;
-    int recvbuflen = 512;
-
-    std::string buf;
-
-    
-
+    SOCKET client;
+    SocketWrapper net = SocketWrapper();
     while(1){
-        // Accept a client socket
-        clientSocket = pNetworkHelper.Accept(NULL, NULL);
-        if (clientSocket == INVALID_SOCKET) {
-            return;
-        }
-
-        buf = pNetworkHelper.Recieve(clientSocket);
-
-        std::cout << buf <<std::endl;
-
-        // PARSE HEADER -- IF HEADER IN THE MAP, RETURN THE PAGE, ELSE RETURN ERROR PAGE/HEADER
-        struct RequestInfo info;
-        info = parseHeader(buf);
-        if(strncmp(recvbuf, "GET / HTTP", 10) == 0){
-            iSendResult = 0;
-            // send( clientSocket, helloPage, mIResult, 0 );
-        }
-        if (iSendResult == SOCKET_ERROR) {
-            printf("send failed with error: %d\n", WSAGetLastError());
-            closesocket(clientSocket);
-            WSACleanup();
-            return;
-        }
-        printf("Bytes sent: %d\n", iSendResult);
-
-        // shutdown the connection since we're done
-        pNetworkHelper.Cleanup(clientSocket);
+        client = net.Accept(NULL, NULL);
+        std::cout << net.Recieve(client);
+        net.Send("TESTING\n\0", client);
+        net.Cleanup(client); 
     }
 }
 

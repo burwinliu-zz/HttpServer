@@ -5,15 +5,15 @@ using SocketPointer = std::shared_ptr<SocketWrapper>;
 
 int __cdecl main(void){
     SOCKET client;
-
-    printf("0");
+    SocketWrapper sock = SocketWrapper();
     Network net = Network();
 
-    printf("1");
-    client = net.Accept(NULL, NULL);
-    std::cout << net.Recieve(client);
-    net.Send("TESTING", client);
-    net.Cleanup(client);
+    while(1){
+        client = sock.Accept(NULL, NULL);
+        std::cout << sock.Recieve(client);
+        sock.Send("TESTING\n\0", client);
+        sock.Cleanup(client); 
+    }
 
 
     // SocketPointer sock(new SocketWrapper);
