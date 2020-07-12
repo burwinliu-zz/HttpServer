@@ -1,5 +1,7 @@
 #include "socketWrapper.h"
 
+//todo buffer management.
+//todo Exception handling
 
 // Constructs/Destructors
 SocketWrapper::SocketWrapper(int pPortNumber){

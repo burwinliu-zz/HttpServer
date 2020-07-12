@@ -1,21 +1,10 @@
 #include "server.h"
 
 HttpServer::HttpServer(int pPortNumber){
-    WSADATA wsaData;
-    int iResult;
-    
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return;
-    }
-
     pNetworkHelper = SocketWrapper(pPortNumber);
 }
 
 HttpServer::~HttpServer(){
-    WSACleanup();
     return;
 }
 
@@ -37,13 +26,13 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 }
 
 void HttpServer::StartServer(){
-    SOCKET client;
+    SOCKET clientSock;
     SocketWrapper net = SocketWrapper();
     while(1){
-        client = net.Accept(NULL, NULL);
-        std::cout << net.Recieve(client);
-        net.Send("TESTING\n\0", client);
-        net.Cleanup(client); 
+        clientSock = net.Accept(NULL, NULL);
+        std::cout << net.Recieve(clientSock);
+        net.Send("TESTING\n\0", clientSock);
+        net.Cleanup(clientSock); 
     }
 }
 
