@@ -5,8 +5,7 @@ using SocketPointer = std::shared_ptr<SocketWrapper>;
 int __cdecl main(void){
     SOCKET client;
 
-    std::cout << "TEST" << std::endl;
-    HttpServer server = HttpServer();
+    HttpServer server = HttpServer(8080);
 
     server.StartServer();
 

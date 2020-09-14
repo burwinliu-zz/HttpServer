@@ -1,8 +1,8 @@
 #include "server.h"
 
-HttpServer::HttpServer(int pPortNumber){
-    HttpServer::pPortNumber = pPortNumber;
-    HttpServer::pNetworkHelper = SocketWrapper(pPortNumber);
+HttpServer::HttpServer(int portNum){
+    pPortNumber = portNum;
+    pNetworkHelper = SocketWrapper(pPortNumber);
 }
 
 HttpServer::~HttpServer(){
@@ -29,13 +29,19 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 void HttpServer::StartServer(){
     SOCKET clientSock;
 
-    std::cout << "SERVER STARTED ON " << HttpServer::pPortNumber << ".";
-    while(1){
-        clientSock = HttpServer::pNetworkHelper.Accept(NULL, NULL);
-        std::cout << HttpServer::pNetworkHelper.Recieve(clientSock);
-        HttpServer::pNetworkHelper.Send("TESTING\n\0", clientSock);
-        HttpServer::pNetworkHelper.Cleanup(clientSock); 
+    std::cout << "SERVER STARTED ON " << pPortNumber << "." <<std::endl;
+    while(pNetworkHelper.getSetupSuccess()){
+        clientSock = pNetworkHelper.Accept(NULL, NULL);
+        if (clientSock == INVALID_SOCKET){
+            std::cout << "INVALID SOCKET." <<std::endl;
+            Sleep(8000);
+            return;
+        }
+        pNetworkHelper.Send("TESTING\n\0", clientSock);
+        pNetworkHelper.Cleanup(clientSock); 
+        Sleep(8000);
     }
+    Sleep(8000);
 }
 
 std::string HttpServer::fileToResponse(std::string pFilePath){

@@ -14,17 +14,15 @@
 class SocketWrapper{
     public:
         // Constructs/Destructors
-        SocketWrapper(int pPortNumber=8000);
+        SocketWrapper(int portNum=8000);
         ~SocketWrapper();  
-
-
-        // Methods and functions
-        void bindSocket();
 
         SOCKET Accept(sockaddr *addr, int *addrlen);
         int Send(std::string message, SOCKET clientSocket);
         std::string Recieve(SOCKET clientSocket);
         void Cleanup(SOCKET socket);
+
+        int getSetupSuccess();
 
     private:
         // Class variables
@@ -43,6 +41,8 @@ class SocketWrapper{
         //For Invalid Sockets
         int mSetupSuccess = 0;
         int mSocketBound = 0;   
+
+
 };
 
 
