@@ -1,6 +1,6 @@
 #include "network.h"
 
-Network::Network(std::function<std::string (std::string)> func, int pPortNumber){
+Network::Network(int pPortNumber){
     return;
 }
 

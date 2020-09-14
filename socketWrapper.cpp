@@ -20,7 +20,6 @@ SocketWrapper::SocketWrapper(int pPortNumber){
     mHints.ai_socktype = SOCK_STREAM;
     mHints.ai_protocol = IPPROTO_TCP;
     mHints.ai_flags = AI_PASSIVE;
-printf("2");
     bindSocket();
 }
 

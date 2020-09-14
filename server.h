@@ -40,6 +40,7 @@ class HttpServer{
         // Class variables
         // For Socket Setup
         SocketWrapper pNetworkHelper;
+        int pPortNumber;
 
         //For serving resources to paths
         std::map<std::string, std::map<std::string, std::string>> mMapResources;

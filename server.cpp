@@ -1,7 +1,8 @@
 #include "server.h"
 
 HttpServer::HttpServer(int pPortNumber){
-    pNetworkHelper = SocketWrapper(pPortNumber);
+    HttpServer::pPortNumber = pPortNumber;
+    HttpServer::pNetworkHelper = SocketWrapper(pPortNumber);
 }
 
 HttpServer::~HttpServer(){
@@ -27,12 +28,13 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 
 void HttpServer::StartServer(){
     SOCKET clientSock;
-    SocketWrapper net = SocketWrapper();
+
+    std::cout << "SERVER STARTED ON " << HttpServer::pPortNumber << ".";
     while(1){
-        clientSock = net.Accept(NULL, NULL);
-        std::cout << net.Recieve(clientSock);
-        net.Send("TESTING\n\0", clientSock);
-        net.Cleanup(clientSock); 
+        clientSock = HttpServer::pNetworkHelper.Accept(NULL, NULL);
+        std::cout << HttpServer::pNetworkHelper.Recieve(clientSock);
+        HttpServer::pNetworkHelper.Send("TESTING\n\0", clientSock);
+        HttpServer::pNetworkHelper.Cleanup(clientSock); 
     }
 }
 

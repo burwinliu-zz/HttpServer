@@ -1,19 +1,21 @@
-#include "socketWrapper.h"
-#include "network.h"
+#include "server.h"
 
 using SocketPointer = std::shared_ptr<SocketWrapper>;
 
 int __cdecl main(void){
     SOCKET client;
-    SocketWrapper sock = SocketWrapper();
-    Network net = Network();
 
-    while(1){
-        client = sock.Accept(NULL, NULL);
-        std::cout << sock.Recieve(client);
-        sock.Send("TESTING\n\0", client);
-        sock.Cleanup(client); 
-    }
+    std::cout << "TEST" << std::endl;
+    HttpServer server = HttpServer();
+
+    server.StartServer();
+
+    // while(1){
+    //     client = sock.Accept(NULL, NULL);
+    //     std::cout << sock.Recieve(client);
+    //     sock.Send("TESTING\n\0", client);
+    //     sock.Cleanup(client); 
+    // }
 
 
     // SocketPointer sock(new SocketWrapper);
@@ -37,5 +39,5 @@ int __cdecl main(void){
 
     // client->close();
 
-    // return 0;
+    return 0;
 }
