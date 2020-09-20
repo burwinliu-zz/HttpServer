@@ -33,8 +33,8 @@ SocketWrapper::~SocketWrapper(){
 
 
 // Methods and functions
-SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
-    SOCKET clientSocket = INVALID_SOCKET;
+void SocketWrapper::Listen(){
+    
     int res;
 
     struct addrinfo *result = NULL;
@@ -48,7 +48,8 @@ SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
     iResult = getaddrinfo(NULL, mPortNumber.c_str(), &mHints, &result);
     if ( iResult != 0 ) {
         printf("getaddrinfo failed with error: %d\n", iResult);
-        return INVALID_SOCKET;
+        mListenSocket = INVALID_SOCKET;
+        return;
     }
 
     // Create a SOCKET for connecting to server
@@ -56,7 +57,8 @@ SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
     if (mListenSocket == INVALID_SOCKET) {
         printf("socket in BindSocket failed with error: %ld\n", WSAGetLastError());
         freeaddrinfo(result);
-        return INVALID_SOCKET;
+        mListenSocket = INVALID_SOCKET;
+        return;
     }
 
     // Setup the TCP listening socket
@@ -65,7 +67,8 @@ SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
         printf("bind in BindSocket failed with error: %d\n", WSAGetLastError());
         freeaddrinfo(result);
         closesocket(mListenSocket);
-        return INVALID_SOCKET;
+        mListenSocket = INVALID_SOCKET;
+        return;
     }
 
     freeaddrinfo(result);
@@ -74,9 +77,13 @@ SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
     if (iResult == SOCKET_ERROR) {
         printf("listen in BindSocket in BindSocket failed with error: %d\n", WSAGetLastError());
         closesocket(mListenSocket);
-        return INVALID_SOCKET;
+        mListenSocket = INVALID_SOCKET;
+        return;
     }
     mSocketBound = 1;
+}
+SOCKET SocketWrapper::Accept(sockaddr *addr, int *addrlen){
+    SOCKET clientSocket = INVALID_SOCKET;
 
     clientSocket = accept(mListenSocket, addr, addrlen);
     if (clientSocket == INVALID_SOCKET) {

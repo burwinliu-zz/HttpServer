@@ -30,6 +30,7 @@ void HttpServer::StartServer(){
     SOCKET clientSock;
 
     std::cout << "SERVER STARTED ON " << pPortNumber << "." <<std::endl;
+    pNetworkHelper.Listen();
     while(pNetworkHelper.getSetupSuccess()){
         clientSock = pNetworkHelper.Accept(NULL, NULL);
         if (clientSock == INVALID_SOCKET){

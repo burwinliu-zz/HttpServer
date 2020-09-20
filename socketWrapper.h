@@ -17,6 +17,7 @@ class SocketWrapper{
         SocketWrapper(int portNum=8000);
         ~SocketWrapper();  
 
+        void Listen();
         SOCKET Accept(sockaddr *addr, int *addrlen);
         int Send(std::string message, SOCKET clientSocket);
         std::string Recieve(SOCKET clientSocket);
