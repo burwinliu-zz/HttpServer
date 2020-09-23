@@ -64,23 +64,26 @@ HttpServer::RequestInfo HttpServer::parseHeader(std::string pResponse){
     struct RequestInfo result;
 
     std::string header;
-    int firstPos, secondSpace;
+    int firstPos, secondPos;
     
     if (pResponse == ""){
         return result;
     }
-
+    std::cout << pResponse << std::endl;
     header = pResponse.substr(0, pResponse.find("\n"));
+    std::cout << "# RECIEVED " << header << " w/ " << pResponse.find("\n") << "-" << std::endl;
+
+    printf("# RECIEVED %s w/ %d\n", header.c_str(), pResponse.find("\n"));
 
     firstPos = header.find(" ");
-    secondSpace = header.find(" ", firstPos);
+    secondPos = header.find(" ", firstPos+1);
     result.requestType = header;
     result.requestPath = header;
     result.requestProtocol = header;
 
-    std::cout << " RESULT ONE-" << result.requestType <<std::endl;
-    std::cout << " RESULT TWO-" << result.requestPath <<std::endl;
-    std::cout << " RESULT THREE-" << result.requestProtocol <<std::endl;
+    result.requestType = result.requestType.substr(0, firstPos);
+    result.requestPath = result.requestPath.substr(firstPos+1, (secondPos-firstPos) - 1);
+    result.requestProtocol = result.requestProtocol.substr(secondPos+1, result.requestProtocol.length() - secondPos - 1);
 
     return result;
 }
