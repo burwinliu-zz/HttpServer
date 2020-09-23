@@ -44,7 +44,6 @@ void SocketWrapper::Listen(){
 
 
     // Resolve the server address and port
-    printf("PRING PORT %s\n", mPortNumber.c_str());
     iResult = getaddrinfo(NULL, mPortNumber.c_str(), &mHints, &result);
     if ( iResult != 0 ) {
         printf("getaddrinfo failed with error: %d\n", iResult);
@@ -104,7 +103,7 @@ int SocketWrapper::Send(std::string message, SOCKET clientSocket){
     return iSendResult;
 }
 
-std::string SocketWrapper::Recieve(SOCKET clientSocket){
+std::string SocketWrapper::Receive(SOCKET clientSocket){
     std::string buf;
     char recvbuf[512];
     int iSendResult;

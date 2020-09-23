@@ -28,16 +28,23 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 
 void HttpServer::StartServer(){
     SOCKET clientSock;
+    std::string response;
 
-    std::cout << "SERVER STARTED ON " << pPortNumber << "." <<std::endl;
+
+    std::cout << "Server started on port " << pPortNumber << "." <<std::endl;
     pNetworkHelper.Listen();
     while(pNetworkHelper.getSetupSuccess()){
         clientSock = pNetworkHelper.Accept(NULL, NULL);
         if (clientSock == INVALID_SOCKET){
-            std::cout << "INVALID SOCKET." <<std::endl;
+            std::cout << "Bad socket setup" <<std::endl;
             Sleep(8000);
             return;
         }
+        response = pNetworkHelper.Receive(clientSock);
+
+        parseHeader(response);
+
+
         pNetworkHelper.Send("TESTING\n\0", clientSock);
         pNetworkHelper.Cleanup(clientSock); 
         Sleep(8000);
@@ -55,8 +62,25 @@ std::string HttpServer::fileToString(std::string pFilePath){
 
 HttpServer::RequestInfo HttpServer::parseHeader(std::string pResponse){
     struct RequestInfo result;
-    result.requestPath = "";
-    result.requestProtocol ="";
-    result.requestType = "";
+
+    std::string header;
+    int firstPos, secondSpace;
+    
+    if (pResponse == ""){
+        return result;
+    }
+
+    header = pResponse.substr(0, pResponse.find("\n"));
+
+    firstPos = header.find(" ");
+    secondSpace = header.find(" ", firstPos);
+    result.requestType = header;
+    result.requestPath = header;
+    result.requestProtocol = header;
+
+    std::cout << " RESULT ONE-" << result.requestType <<std::endl;
+    std::cout << " RESULT TWO-" << result.requestPath <<std::endl;
+    std::cout << " RESULT THREE-" << result.requestProtocol <<std::endl;
+
     return result;
 }

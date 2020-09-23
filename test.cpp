@@ -11,7 +11,7 @@ int __cdecl main(void){
 
     // while(1){
     //     client = sock.Accept(NULL, NULL);
-    //     std::cout << sock.Recieve(client);
+    //     std::cout << sock.Receive(client);
     //     sock.Send("TESTING\n\0", client);
     //     sock.Cleanup(client); 
     // }

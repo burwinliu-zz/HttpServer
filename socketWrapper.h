@@ -20,7 +20,7 @@ class SocketWrapper{
         void Listen();
         SOCKET Accept(sockaddr *addr, int *addrlen);
         int Send(std::string message, SOCKET clientSocket);
-        std::string Recieve(SOCKET clientSocket);
+        std::string Receive(SOCKET clientSocket);
         void Cleanup(SOCKET socket);
 
         int getSetupSuccess();
