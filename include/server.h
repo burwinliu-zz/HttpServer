@@ -49,6 +49,7 @@ class HttpServer{
 
 
         //Helpers
+        std::string constructHttpHeader();
         std::string fileToResponse(std::string pFilePath);
         std::string fileToString(std::string pFilePath);
         struct RequestInfo parseHeader(std::string pResponse);

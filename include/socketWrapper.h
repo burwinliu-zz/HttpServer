@@ -46,5 +46,13 @@ class SocketWrapper{
 
 };
 
+class SocketError{
+    public:
+        SocketError(int err=-1);
+        int ErrorCode();
 
+    private:
+        int mErrorCode = -1;
+
+};
 #endif

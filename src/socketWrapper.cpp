@@ -105,42 +105,45 @@ int SocketWrapper::Send(std::string message, SOCKET clientSocket){
 
 std::string SocketWrapper::Receive(SOCKET clientSocket){
     std::string buf;
-    char recvbuf[512];
+    char recvbuf[16384];
     int iSendResult;
-    int recvbuflen = 512;
+    int recvbuflen = 16384;
     int iResult;
-
-    do {
-        std::cout << "STILL IN " <<std::endl;
-        iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            // KEEP APPENDING TO RESULT STR AND THEN RETURN  (TEST AND CHECK)
-            if (mIResult < recvbuflen){
-                recvbuf[mIResult] = '\0';
-            }
-            buf += recvbuf; // char*
+        
+    iResult = recv(clientSocket, recvbuf, recvbuflen, 0);
+    
+    if (iResult > 0) {
+        // KEEP APPENDING TO RESULT STR AND THEN RETURN  (TEST AND CHECK)
+        if (iResult < recvbuflen){
+            recvbuf[iResult] = '\0';
+            buf = recvbuf; // char*
+            printf("# RECIEVED %s----\n", recvbuf);
+            throw SocketError(1);
             return buf;
         }
-        else if (iResult == 0){
-            printf("Client Exited\n");
-            break;
+        else{
+            throw SocketError(1);
         }
-        else {
-            printf("recv failed with error: %d\n", WSAGetLastError());
-            closesocket(clientSocket);
-            break;
-        }
+        
+    }
+    else if (iResult == 0){
+        printf("Client Exited\n");
+        return "";
+    }
+    else {
+        printf("recv in Receive failed with error: %d\n", WSAGetLastError());
+        closesocket(clientSocket);
+        throw SocketError(2);
+    }
 
-    } while (iResult > 0);
-
-    return buf;
+    
 
 }
 
 void SocketWrapper::Cleanup(SOCKET socket){
     int result = shutdown(socket, SD_SEND);
     if (result == SOCKET_ERROR) {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
+        printf("shutdown in Cleanup failed with error: %d\n", WSAGetLastError());
         closesocket(socket);
         return;
     }
@@ -149,3 +152,12 @@ void SocketWrapper::Cleanup(SOCKET socket){
 int SocketWrapper::getSetupSuccess(){
     return mSetupSuccess;
 }
+
+SocketError::SocketError(int err){
+    mErrorCode = err;
+}
+
+int SocketError::ErrorCode(){
+    return mErrorCode;
+}
+

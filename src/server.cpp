@@ -29,6 +29,7 @@ int HttpServer::SetResource(std::string pPathName, std::string pRequestType, std
 void HttpServer::StartServer(){
     SOCKET clientSock;
     std::string response;
+    RequestInfo header;
 
 
     std::cout << "Server started on port " << pPortNumber << "." <<std::endl;
@@ -40,15 +41,31 @@ void HttpServer::StartServer(){
             Sleep(8000);
             return;
         }
-        response = pNetworkHelper.Receive(clientSock);
+        try{
+            response = pNetworkHelper.Receive(clientSock);
 
-        parseHeader(response);
+            header = parseHeader(response);
 
 
-        pNetworkHelper.Send("TESTING\n\0", clientSock);
-        pNetworkHelper.Cleanup(clientSock); 
-        Sleep(8000);
+            pNetworkHelper.Send(response, clientSock);
+            // pNetworkHelper.Cleanup(clientSock); 
+            Sleep(8000);
+        } catch (SocketError e){
+            if(e.ErrorCode() == 1){
+                std::cout << "BUFFER OVERFLOW -- ERROR 413 SENDING" << std::endl; // TODO
+                pNetworkHelper.Send("HTTP/1.1 413 Entity Too Large", clientSock);
+            }
+            else if(e.ErrorCode() == 2){
+                std::cout << "RECV FAILED -- ERROR 500 SENDING" << std::endl; // TODO
+                pNetworkHelper.Send("HTTP/1.1 500 Internal Server Error", clientSock);
+            }
+            else{
+                std::cout << "UNKNOWN ERROR" << std::endl;
+                pNetworkHelper.Send("HTTP/1.1 503 Service Unavailable", clientSock);
+            }
+        }
     }
+    pNetworkHelper.Cleanup(clientSock); 
     Sleep(8000);
 }
 
@@ -57,6 +74,10 @@ std::string HttpServer::fileToResponse(std::string pFilePath){
 }
 
 std::string HttpServer::fileToString(std::string pFilePath){
+    return "";
+}
+
+std::string HttpServer::constructHttpHeader(){
     return "";
 }
 
@@ -69,11 +90,7 @@ HttpServer::RequestInfo HttpServer::parseHeader(std::string pResponse){
     if (pResponse == ""){
         return result;
     }
-    std::cout << pResponse << std::endl;
     header = pResponse.substr(0, pResponse.find("\n"));
-    std::cout << "# RECIEVED " << header << " w/ " << pResponse.find("\n") << "-" << std::endl;
-
-    printf("# RECIEVED %s w/ %d\n", header.c_str(), pResponse.find("\n"));
 
     firstPos = header.find(" ");
     secondPos = header.find(" ", firstPos+1);
