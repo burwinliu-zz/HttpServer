@@ -77,7 +77,7 @@ std::string HttpServer::fileToString(std::string pFilePath){
     return "";
 }
 
-std::string HttpServer::constructHttpHeader(){
+std::string HttpServer::constructHttpHeader(std::string pStatus, int pStatusCode, std::string pContentType){
     return "";
 }
 
